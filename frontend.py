@@ -70,6 +70,10 @@ def convert_board_to_cells(board):
 
 app = Flask(__name__)
 
+@app.route('/', methods=['GET'])
+def home():
+    return render_template('index.html', board=convert_board_to_cells([[0]]), winner=None, com_first=False, home=True)
+
 @app.route('/<path:state>', methods=['GET'])
 def root(state):
     com_first, moves = unescape_state(state)
@@ -82,7 +86,7 @@ def root(state):
         winner, board = show_position(moves)
     except RuntimeError:
         return "invalid move! select a correct move", 400
-    return render_template('index.html', board=convert_board_to_cells(board), winner=winner, com_first=com_first)
+    return render_template('index.html', board=convert_board_to_cells(board), winner=winner, com_first=com_first, home=False)
 
 if __name__ == '__main__':
     app.run(debug=True)
