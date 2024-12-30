@@ -1,12 +1,11 @@
-// bindings.cpp
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>               // For std::vector, std::string, etc.
-#include <memory>                       // For std::shared_ptr
+#include <pybind11/stl.h>
+#include <memory>
 #include "trax.h"
 
 namespace py = pybind11;
 
-// ヘルパー関数：kLargePieceNotations を Python のリストに変換
+// Helper function: Convert kLargePieceNotations to a Python list
 static py::list convertLargePieceNotations() {
     py::list outer_list;
     for (int i = 0; i < NUM_PIECES; ++i) {
@@ -23,14 +22,14 @@ PYBIND11_MODULE(trax_bindings, m) {
     m.doc() = "Python bindings for TRAX game engine (excluding Searcher)";
 
     //
-    // 1) グローバル定数・変数・配列
+    // Global constants, variables, and arrays
     //
     m.attr("kInf") = kInf;
 
     m.attr("kDx") = py::cast(std::vector<int>{kDx[0], kDx[1], kDx[2], kDx[3]});
     m.attr("kDy") = py::cast(std::vector<int>{kDy[0], kDy[1], kDy[2], kDy[3]});
 
-    // kPieceColors をリストとして公開
+     // Expose kPieceColors as a list
     {
         py::list py_piece_colors;
         for (int i = 0; i < NUM_PIECES; ++i) {
@@ -39,18 +38,18 @@ PYBIND11_MODULE(trax_bindings, m) {
         m.attr("kPieceColors") = py_piece_colors;
     }
 
-    // kPieceNotations を文字列として公開
+     // Expose kPieceNotations as a string
     {
         m.attr("kPieceNotations") = std::string(kPieceNotations);
     }
 
-    // kLargePieceNotations をリストのリストとして公開
+     // Expose kLargePieceNotations as a list of lists
     m.attr("kLargePieceNotations") = convertLargePieceNotations();
 
     m.attr("kPositionHashPrime") = kPositionHashPrime;
 
     //
-    // 2) グローバル関数
+    // global functions
     //
     m.def("Random", &Random, "Generate a random number using Xorshift128.");
     m.def("GeneratePossiblePiecesTable", &GeneratePossiblePiecesTable, "Generate a lookup table for possible pieces.");
@@ -58,7 +57,7 @@ PYBIND11_MODULE(trax_bindings, m) {
     m.def("GenerateForcedPlayTable", &GenerateForcedPlayTable, "Generate forced-play table.");
 
     //
-    // 3) 列挙型
+    // Enums
     //
 
     // enum Piece
@@ -83,7 +82,7 @@ PYBIND11_MODULE(trax_bindings, m) {
         .export_values();
 
     //
-    // 4) Struct Move
+    // Struct Move
     //
     py::class_<Move>(m, "Move")
         .def(py::init<>(), "Default constructor.")
@@ -113,7 +112,7 @@ PYBIND11_MODULE(trax_bindings, m) {
             "Piece kind.");
 
     //
-    // 5) Struct ScoredMove
+    // Struct ScoredMove
     //
     py::class_<ScoredMove>(m, "ScoredMove")
         .def(py::init<int, Move>(),
@@ -128,7 +127,7 @@ PYBIND11_MODULE(trax_bindings, m) {
              "Comparison operator for sorting.");
 
     //
-    // 6) Struct Line
+    // Struct Line
     //
     py::class_<Line>(m, "Line")
         .def(py::init<>(), "Default constructor for Line.")
@@ -148,7 +147,7 @@ PYBIND11_MODULE(trax_bindings, m) {
         .def("Dump", &Line::Dump, "Debug print information of the line.")
         .def("is_mate", &Line::is_mate, "Return true if line is mate.")
         .def_readwrite("is_red", &Line::is_red, "True if the line is red.")
-        // 配列メンバーをプロパティとして公開
+        // Exposing edge_distances as a property
         .def_property("edge_distances",
             [](const Line &l) -> std::vector<int> {
                 return std::vector<int>(l.edge_distances, l.edge_distances + 2);
@@ -176,7 +175,7 @@ PYBIND11_MODULE(trax_bindings, m) {
         .def_readwrite("endpoint_index_b", &Line::endpoint_index_b, "Endpoint B index.");
 
     //
-    // 7) Class Position
+    // Class Position
     //
     py::class_<Position, std::shared_ptr<Position>>(m, "Position")
         .def(py::init<>(), "Construct an empty Trax board.")
@@ -203,10 +202,9 @@ PYBIND11_MODULE(trax_bindings, m) {
         .def("Clear", &Position::Clear, "Clear the board to an empty Trax board.")
         .def("Dump", &Position::Dump, "Print debug info of the position to stderr.")
         .def("ToString64x64", &Position::ToString64x64, "Convert the position to a 64x64 map string.")
-        // 'at' メソッドのバインディングを修正
         .def("at",
              [](const std::shared_ptr<Position> &self, int x, int y) -> Piece {
-                 return static_cast<const Position&>(*self).at(x, y); // const Position& を明示的に使用
+                 return static_cast<const Position&>(*self).at(x, y);
              },
              py::arg("x"), py::arg("y"),
              "Get the piece at (x, y).")
@@ -218,7 +216,7 @@ PYBIND11_MODULE(trax_bindings, m) {
         .def("winning_reason", &Position::winning_reason, "Return the reason of winning if finished() == True; otherwise UNKNOWN.");
 
     //
-    // 8) struct Game
+    // struct Game
     //
     py::class_<Game>(m, "Game")
         .def(py::init<>(), "Default constructor for Game.")
@@ -226,13 +224,13 @@ PYBIND11_MODULE(trax_bindings, m) {
         .def_readwrite("comments", &Game::comments, "List of comments (one for each move).")
         .def_readwrite("winner", &Game::winner, "1 if red is the winner, -1 if white is the winner, 0 if draw.")
         .def_readwrite("winning_reason", &Game::winning_reason, "Winning reason such as loop or line.")
-        // 配列メンバーをプロパティとして公開
+        // Exposing average_search_depths and average_nps as properties
         .def_property("average_search_depths",
             [](const Game &g) -> std::vector<double> {
                 return std::vector<double>(g.average_search_depths, g.average_search_depths + 2);
             },
             [](Game &g, const std::vector<double> &v) {
-                for (size_t i = 0; i < 2 && i < v.size(); ++i) { // size_t に変更
+                for (size_t i = 0; i < 2 && i < v.size(); ++i) {
                     g.average_search_depths[i] = v[i];
                 }
             },
@@ -242,7 +240,7 @@ PYBIND11_MODULE(trax_bindings, m) {
                 return std::vector<double>(g.average_nps, g.average_nps + 2);
             },
             [](Game &g, const std::vector<double> &v) {
-                for (size_t i = 0; i < 2 && i < v.size(); ++i) { // size_t に変更
+                for (size_t i = 0; i < 2 && i < v.size(); ++i) {
                     g.average_nps[i] = v[i];
                 }
             },
@@ -251,14 +249,14 @@ PYBIND11_MODULE(trax_bindings, m) {
         .def("num_moves", &Game::num_moves, "Return the number of moves in this game.");
 
     //
-    // 9) ParseCommentedGames
+    // ParseCommentedGames
     //
     m.def("ParseCommentedGames", &ParseCommentedGames,
           py::arg("filename"), py::arg("games"),
           "Parse commented games from a file into the provided games vector.");
 
     //
-    // 10) Class Book
+    // Class Book
     //
     py::class_<Book>(m, "Book")
         .def(py::init<>(), "Default constructor for Book.")
@@ -274,7 +272,7 @@ PYBIND11_MODULE(trax_bindings, m) {
              "Select a move from the book for the given position. Returns (found, move).");
 
     //
-    // 11) ShowPosition
+    // ShowPosition
     //
     m.def("ShowPosition", &ShowPosition, "Show the current position (reads from flags?).");
 }

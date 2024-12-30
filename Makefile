@@ -1,8 +1,5 @@
-# Makefile
-
 CXX = g++
 
-# モード選択（デフォルト: Release）
 MODE ?= Release
 
 CXXFLAGS_MAIN_RELEASE = -std=c++11 -Wall \
@@ -21,7 +18,6 @@ CXXFLAGS_MAIN_DEBUG = -std=c++11 -Wall \
     -I. \
     -O1 -g -fsanitize=address -fPIC -Wno-literal-suffix
 
-# gflags用のフラグ。-fPICを忘れずに入れる
 CXXFLAGS_GFLAGS = -std=c++03 -Wall -fPIC \
     -Ivendor/gflags
 
@@ -38,7 +34,6 @@ PYBIND11_INCLUDE = $(shell python3 -m pybind11 --includes)
 TRAX_SRC = trax.cc
 TRAX_OBJ = trax.o
 
-# gflags関連
 GFLAGS_SRC = vendor/gflags/gflags.cc
 GFLAGS_OBJ = gflags.o
 GFLAGS_COMPLETIONS_SRC = vendor/gflags/gflags_completions.cc
@@ -51,11 +46,9 @@ BINDINGS_SO = trax_bindings.so
 
 all: $(BINDINGS_SO)
 
-# trax.oの生成: -fPIC がついているか？
 $(TRAX_OBJ): $(TRAX_SRC) trax.h
 	$(CXX) $(CXXFLAGS_MAIN) -c $< -o $@
 
-# gflags関連
 $(GFLAGS_OBJ): $(GFLAGS_SRC)
 	$(CXX) $(CXXFLAGS_GFLAGS) -c $< -o $@
 
@@ -65,7 +58,6 @@ $(GFLAGS_COMPLETIONS_OBJ): $(GFLAGS_COMPLETIONS_SRC)
 $(GFLAGS_REPORTING_OBJ): $(GFLAGS_REPORTING_SRC)
 	$(CXX) $(CXXFLAGS_GFLAGS) -c $< -o $@
 
-# バインディング生成
 $(BINDINGS_SO): $(BINDINGS_SRC) $(TRAX_OBJ) $(GFLAGS_OBJ) $(GFLAGS_COMPLETIONS_OBJ) $(GFLAGS_REPORTING_OBJ)
 	$(CXX) $(CXXFLAGS_MAIN) $(PYBIND11_INCLUDE) -shared $^ -o $@ $(LDFLAGS)
 
