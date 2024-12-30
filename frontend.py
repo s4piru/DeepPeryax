@@ -1,6 +1,7 @@
 from flask import Flask
 import subprocess
 from flask import render_template
+from collections import namedtuple
 
 # http://trax.peryaudo.org/W_at0p_A2p_B1p_at2b_A3s_at2b_at1s_F1b_E2b_F2p_D3p_F3p_A3s_at3s_G0s_H1s_B1b_A2p_A1p_at2s_at4s_A5s_at3b_A2b_A1b_G5b_A6s_at6b_FIN
 # White is computer, and red (human) won. White plays first.
@@ -37,13 +38,21 @@ def show_position(moves):
     board = [[int.from_bytes(b, 'little') for b in line] for line in board]
     return winner, board
 
+Cell = namedtuple('Cell', ['kind', 'x', 'y'])
+
+def convert_board_to_cells(board):
+    cells = []
+    for y, row in enumerate(board):
+        cells.append([Cell(kind=kind, x=x, y=y) for x, kind in enumerate(row)])
+    return cells
+
 app = Flask(__name__)
 
 @app.route('/<path:state>', methods=['GET'])
 def root(state):
     com_first, moves = unescape_state(state)
     winner, board = show_position(moves)
-    return render_template('index.html', board=board, winner=winner)
+    return render_template('index.html', board=convert_board_to_cells(board), winner=winner)
 
 if __name__ == '__main__':
     app.run(debug=True)
