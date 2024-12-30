@@ -1,29 +1,75 @@
+# Makefile
+
 CXX = g++
 
-# Release
-CXXFLAGS = -std=c++11 -Wall -Wno-unused-const-variable -Wno-strict-aliasing -Wno-maybe-uninitialized -Wno-unused-variable -Wno-unknown-warning-option -Ivendor/gflags -O3 -DNDEBUG
-LDFLAGS = -O3 -lpthread
+# モード選択（デフォルト: Release）
+MODE ?= Release
 
-# Debug
-# CXXFLAGS = -std=c++11 -Wall -Wno-unused-const-variable -Wno-tautological-constant-out-of-range-compare -Ivendor/gflags -O1 -g -fsanitize=address #-pg -DNDEBUG
-# LDFLAGS = -O1 -fsanitize=address -fno-omit-frame-pointer -lpthread #-pg -DNDEBUG
+CXXFLAGS_MAIN_RELEASE = -std=c++11 -Wall \
+    -Wno-unused-const-variable \
+    -Wno-strict-aliasing \
+    -Wno-maybe-uninitialized \
+    -Wno-unused-variable \
+    -Ivendor/gflags \
+    -I. \
+    -O3 -DNDEBUG -fPIC -Wno-literal-suffix
 
-trax.o: trax.cc trax.h
+CXXFLAGS_MAIN_DEBUG = -std=c++11 -Wall \
+    -Wno-unused-const-variable \
+    -Wno-tautological-constant-out-of-range-compare \
+    -Ivendor/gflags \
+    -I. \
+    -O1 -g -fsanitize=address -fPIC -Wno-literal-suffix
 
-gflags.o: vendor/gflags/gflags.cc
-	$(CXX) -std=c++03 -c $^ -o $@
+# gflags用のフラグ。-fPICを忘れずに入れる
+CXXFLAGS_GFLAGS = -std=c++03 -Wall -fPIC \
+    -Ivendor/gflags
 
-gflags_completions.o: vendor/gflags/gflags_completions.cc
-	$(CXX) -std=c++03 -c $^ -o $@
+ifeq ($(MODE), Debug)
+    CXXFLAGS_MAIN = $(CXXFLAGS_MAIN_DEBUG)
+    LDFLAGS = -O1 -fsanitize=address -fno-omit-frame-pointer -lpthread
+else
+    CXXFLAGS_MAIN = $(CXXFLAGS_MAIN_RELEASE)
+    LDFLAGS = -O3 -lpthread
+endif
 
-gflags_reporting.o: vendor/gflags/gflags_reporting.cc
-	$(CXX) -std=c++03 -c $^ -o $@
+PYBIND11_INCLUDE = $(shell python3 -m pybind11 --includes)
+
+TRAX_SRC = trax.cc
+TRAX_OBJ = trax.o
+
+# gflags関連
+GFLAGS_SRC = vendor/gflags/gflags.cc
+GFLAGS_OBJ = gflags.o
+GFLAGS_COMPLETIONS_SRC = vendor/gflags/gflags_completions.cc
+GFLAGS_COMPLETIONS_OBJ = gflags_completions.o
+GFLAGS_REPORTING_SRC = vendor/gflags/gflags_reporting.cc
+GFLAGS_REPORTING_OBJ = gflags_reporting.o
+
+BINDINGS_SRC = bindings/bindings.cpp
+BINDINGS_SO = trax_bindings.so
+
+all: $(BINDINGS_SO)
+
+# trax.oの生成: -fPIC がついているか？
+$(TRAX_OBJ): $(TRAX_SRC) trax.h
+	$(CXX) $(CXXFLAGS_MAIN) -c $< -o $@
+
+# gflags関連
+$(GFLAGS_OBJ): $(GFLAGS_SRC)
+	$(CXX) $(CXXFLAGS_GFLAGS) -c $< -o $@
+
+$(GFLAGS_COMPLETIONS_OBJ): $(GFLAGS_COMPLETIONS_SRC)
+	$(CXX) $(CXXFLAGS_GFLAGS) -c $< -o $@
+
+$(GFLAGS_REPORTING_OBJ): $(GFLAGS_REPORTING_SRC)
+	$(CXX) $(CXXFLAGS_GFLAGS) -c $< -o $@
+
+# バインディング生成
+$(BINDINGS_SO): $(BINDINGS_SRC) $(TRAX_OBJ) $(GFLAGS_OBJ) $(GFLAGS_COMPLETIONS_OBJ) $(GFLAGS_REPORTING_OBJ)
+	$(CXX) $(CXXFLAGS_MAIN) $(PYBIND11_INCLUDE) -shared $^ -o $@ $(LDFLAGS)
 
 clean:
-	rm -f *.o trax
+	rm -f *.o $(BINDINGS_SO) vendor/gflags/*.o
 
-lint:
-	cpplint *.cc *.h
-	cloc *.cc *.h
-
-.PHONY: all test clean lint
+.PHONY: all clean
