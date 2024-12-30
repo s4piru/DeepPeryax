@@ -30,6 +30,8 @@ def show_position(moves):
     )
     input_str = "\n".join([str(len(moves))] + moves)
     stdout, _ = process.communicate(input=input_str.encode("utf-8"))
+    if process.returncode != 0:
+        raise RuntimeError("Subprocess failed with return code {}".format(process.returncode))
     board = [line.split(b" ") for line in stdout.split(b"\n")]
     winner = board[0][0].decode('utf-8')
     if winner == "1": winner = "red"
@@ -51,7 +53,10 @@ app = Flask(__name__)
 @app.route('/<path:state>', methods=['GET'])
 def root(state):
     com_first, moves = unescape_state(state)
-    winner, board = show_position(moves)
+    try:
+        winner, board = show_position(moves)
+    except RuntimeError:
+        return "invalid move! select a correct move", 400
     return render_template('index.html', board=convert_board_to_cells(board), winner=winner)
 
 if __name__ == '__main__':
