@@ -38,7 +38,7 @@ app = Flask(__name__)
 @app.route('/<path:state>', methods=['GET'])
 def root(state):
     moves = unescape_state(state)
-    board = show_position(moves)
+    winner, board = show_position(moves)
     return render_template('index.html', board=board)
 
 if __name__ == '__main__':
