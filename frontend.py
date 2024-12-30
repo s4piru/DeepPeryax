@@ -3,6 +3,7 @@ import subprocess
 from flask import render_template
 
 # http://trax.peryaudo.org/W_at0p_A2p_B1p_at2b_A3s_at2b_at1s_F1b_E2b_F2p_D3p_F3p_A3s_at3s_G0s_H1s_B1b_A2p_A1p_at2s_at4s_A5s_at3b_A2b_A1b_G5b_A6s_at6b_FIN
+# White is computer, and red (human) won. White plays first.
 
 def unescape_move(move):
     move = move.replace("at", "@")
@@ -13,11 +14,12 @@ def unescape_move(move):
 
 def unescape_state(state):
     moves = state.split("_")
+    com_first = (moves[0] == "W")
     moves = moves[1:]
-    if moves[-1] == "FIN":
+    if len(moves) > 0 and moves[-1] == "FIN":
         moves = moves[:-1]
     moves = [unescape_move(move) for move in moves]
-    return moves
+    return com_first, moves
 
 def show_position(moves):
     process = subprocess.Popen(
@@ -39,7 +41,7 @@ app = Flask(__name__)
 
 @app.route('/<path:state>', methods=['GET'])
 def root(state):
-    moves = unescape_state(state)
+    com_first, moves = unescape_state(state)
     winner, board = show_position(moves)
     return render_template('index.html', board=board, winner=winner)
 
