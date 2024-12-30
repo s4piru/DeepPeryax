@@ -77,6 +77,11 @@
     </script>
 </head>
 <body>
+    {% if com_first %}
+        <p>You are Red</p>
+    {% else %}
+        <p>You are White</p>
+    {% endif %}
     {% if winner == "red" %}
         <p>Red is the winner</p>
     {% elif winner == "white" %}
