@@ -41,6 +41,39 @@
                 });
             });
         });
+
+        function toTraxNotation(x, y, kind) {
+            x--;
+            y--;
+            let trax_notation = '';
+            if (x === -1) {
+                trax_notation = 'at';
+            } else {
+                // This way of encoding is called Bijective base-26.
+                // https://github.com/alexfeseto/hexavigesimal
+                // Specified in: http://fpt.massey.ac.nz/design_competition_rules.asp
+                let columns = '';
+                let num = x + 1;
+                while (num > 0) {
+                    num--;
+                    columns += String.fromCharCode(num % ('Z'.charCodeAt(0) - 'A'.charCodeAt(0) + 1) + 'A'.charCodeAt(0));
+                    num = Math.floor(num / ('Z'.charCodeAt(0) - 'A'.charCodeAt(0) + 1));
+                }
+                columns = columns.split('').reverse().join('');
+                trax_notation = columns;
+            }
+
+            trax_notation += (y + 1).toString();
+            trax_notation += kind_names[kind];
+            return trax_notation;
+        }
+
+        function sendRequest() {
+            if (next_x == -1) return;
+            const next_path = window.location.pathname + "_" + toTraxNotation(next_x, next_y, next_kind);
+            window.location.pathname = next_path;
+
+        }
     </script>
 </head>
 <body>
@@ -58,5 +91,6 @@
             </tr>
         {% endfor %}
     </table>
+    <button onclick="sendRequest();">Go!</button>
 </body>
 </html>
