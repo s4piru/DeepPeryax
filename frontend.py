@@ -29,6 +29,8 @@ def show_position(moves):
     stdout, _ = process.communicate(input=input_str.encode("utf-8"))
     board = [line.split(b" ") for line in stdout.split(b"\n")]
     winner = board[0][0].decode('utf-8')
+    if winner == "1": winner = "red"
+    elif winner == "-1": winner = "white"
     board = board[1:-1]
     board = [[int.from_bytes(b, 'little') for b in line] for line in board]
     return winner, board
@@ -39,7 +41,7 @@ app = Flask(__name__)
 def root(state):
     moves = unescape_state(state)
     winner, board = show_position(moves)
-    return render_template('index.html', board=board)
+    return render_template('index.html', board=board, winner=winner)
 
 if __name__ == '__main__':
     app.run(debug=True)

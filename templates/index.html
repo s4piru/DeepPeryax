@@ -6,6 +6,11 @@
     <title>DeepPeryax</title>
 </head>
 <body>
+    {% if winner == "red" %}
+        <p>Red is the winner</p>
+    {% elif winner == "white" %}
+        <p>White is the winner</p>
+    {% endif %}
     <table>
         {% for row in board %}
             <tr>
