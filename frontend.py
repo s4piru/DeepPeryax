@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect
 import subprocess
 from flask import render_template
 from collections import namedtuple
@@ -11,6 +11,13 @@ def unescape_move(move):
     move = move.replace("p", "+")
     move = move.replace("s", "/")
     move = move.replace("b", "\\")
+    return move
+
+def escape_move(move):
+    move = move.replace("@", "at")
+    move = move.replace("+", "p")
+    move = move.replace("/", "s")
+    move = move.replace("\\", "b")
     return move
 
 def unescape_state(state):
@@ -36,9 +43,22 @@ def show_position(moves):
     winner = board[0][0].decode('utf-8')
     if winner == "1": winner = "red"
     elif winner == "-1": winner = "white"
+    else: winner = None
     board = board[1:-1]
     board = [[int.from_bytes(b, 'little') for b in line] for line in board]
     return winner, board
+
+def find_best_move(moves):
+    process = subprocess.Popen(
+        ["./trax", "--best_move", "--searcher=simple-fe"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
+    input_str = "\n".join([str(len(moves))] + moves)
+    stdout, _ = process.communicate(input=input_str.encode("utf-8"))
+    if process.returncode != 0:
+        raise RuntimeError("Subprocess failed with return code {}".format(process.returncode))
+    return stdout.decode("utf-8")
 
 Cell = namedtuple('Cell', ['kind', 'x', 'y'])
 
@@ -53,11 +73,16 @@ app = Flask(__name__)
 @app.route('/<path:state>', methods=['GET'])
 def root(state):
     com_first, moves = unescape_state(state)
+    if (com_first and len(moves) % 2 == 0) or (not com_first and len(moves) % 2 == 1):
+        next_move = find_best_move(moves)
+        next_move = escape_move(next_move)
+        next_state = state + "_" + next_move
+        return redirect(f'/{next_state}')
     try:
         winner, board = show_position(moves)
     except RuntimeError:
         return "invalid move! select a correct move", 400
-    return render_template('index.html', board=convert_board_to_cells(board), winner=winner)
+    return render_template('index.html', board=convert_board_to_cells(board), winner=winner, com_first=com_first)
 
 if __name__ == '__main__':
     app.run(debug=True)
