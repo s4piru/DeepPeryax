@@ -88,5 +88,9 @@ def root(state):
         return "invalid move! select a correct move", 400
     return render_template('index.html', board=convert_board_to_cells(board), winner=winner, com_first=com_first, home=False)
 
+@app.route('/favicon.ico')
+def favicon():
+    return "", 404
+
 if __name__ == '__main__':
     app.run(debug=True)

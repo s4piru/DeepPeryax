@@ -16,6 +16,7 @@
         var next_y = -1;
         var next_kind = 0;
         var kind_names = ["p", "s", "b"];
+        var home = {%if home %} true {% else %} false {% endif %};
 
         document.addEventListener("DOMContentLoaded", function() {
             const images = document.querySelectorAll("img");
@@ -29,7 +30,11 @@
                     }
 
                     if (next_x == x && next_y == y) {
-                        next_kind = (next_kind + 1) % 3;
+                        if (home) {
+                            next_kind = (next_kind + 1) % 2;
+                        } else {
+                            next_kind = (next_kind + 1) % 3;
+                        }
                     } else {
                         next_x = x;
                         next_y = y;
