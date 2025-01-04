@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepPeryax</title>
+    <script>
+        function resetSelection() {
+            const images = document.querySelectorAll("img[data-kind='0']");
+            images.forEach(function(img) {
+                img.src = "/static/images/0.png";
+            });
+        }
+
+        var next_x = -1;
+        var next_y = -1;
+        var next_kind = 0;
+        var kind_names = ["p", "s", "b"];
+        var home = {%if home %} true {% else %} false {% endif %};
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const images = document.querySelectorAll("img");
+            images.forEach(function(img) {
+                img.addEventListener("click", function() {
+                    const x = parseInt(this.getAttribute("data-x"), 10);
+                    const y = parseInt(this.getAttribute("data-y"), 10);
+                    const kind = parseInt(this.getAttribute("data-kind"), 10);
+                    if (kind !== 0) {
+                        return;
+                    }
+
+                    if (next_x == x && next_y == y) {
+                        if (home) {
+                            next_kind = (next_kind + 1) % 2;
+                        } else {
+                            next_kind = (next_kind + 1) % 3;
+                        }
+                    } else {
+                        next_x = x;
+                        next_y = y;
+                        next_kind = 0;
+                    }
+
+                    resetSelection();
+                    img.src = "/static/images/" + kind_names[next_kind] + ".png";
+                });
+            });
+        });
+
+        function toTraxNotation(x, y, kind) {
+            x--;
+            y--;
+            let trax_notation = '';
+            if (x === -1) {
+                trax_notation = 'at';
+            } else {
+                // This way of encoding is called Bijective base-26.
+                // https://github.com/alexfeseto/hexavigesimal
+                // Specified in: http://fpt.massey.ac.nz/design_competition_rules.asp
+                let columns = '';
+                let num = x + 1;
+                while (num > 0) {
+                    num--;
+                    columns += String.fromCharCode(num % ('Z'.charCodeAt(0) - 'A'.charCodeAt(0) + 1) + 'A'.charCodeAt(0));
+                    num = Math.floor(num / ('Z'.charCodeAt(0) - 'A'.charCodeAt(0) + 1));
+                }
+                columns = columns.split('').reverse().join('');
+                trax_notation = columns;
+            }
+
+            trax_notation += (y + 1).toString();
+            trax_notation += kind_names[kind];
+            return trax_notation;
+        }
+
+        function sendRequest() {
+            if (next_x == -1) return;
+            const next_path = window.location.pathname + "_" + toTraxNotation(next_x, next_y, next_kind);
+            window.location.pathname = next_path;
+
+        }
+    </script>
+</head>
+<body>
+    {% if com_first %}
+        <p>You are Red.</p>
+    {% else %}
+        <p>You are White. {% if home %}<a href="/W">Switch to Red</a>{% endif %}</p>
+    {% endif %}
+    {% if winner == "red" %}
+        <p>Red is the winner.</p>
+    {% elif winner == "white" %}
+        <p>White is the winner.</p>
+    {% endif %}
+    <table>
+        {% for row in board %}
+            <tr>
+                {% for cell in row %}
+                    <td><img src="/static/images/{{ cell.kind }}.png" data-x="{{ cell.x }}" data-y="{{ cell.y }}" data-kind="{{ cell.kind }}"></td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+    <button onclick="sendRequest();">Go!</button>
+</body>
+</html>
