@@ -303,40 +303,46 @@ def test_book():
     print()
 
 def test_show_position():
-    """Test the ShowPosition function by simulating user input and capturing output."""
-    print("Testing ShowPosition...")
+    """
+    Test the modified ShowPosition() function which takes
+    (num_moves, [list_of_moves]) instead of reading from stdin.
+    """
+    print("Testing ShowPosition with function arguments...")
 
-    from trax_bindings import ShowPosition
+    moves = [
+        "@0+",
+        "A2+",
+        "B1+",
+        "@2\\",
+        "A3/",
+        "@2\\",
+        "@1/",
+        "F1\\",
+        "E2\\",
+        "F2+",
+        "D3+",
+        "F3+",
+        "A3/",
+        "@3/",
+        "G0/",
+        "H1/",
+        "B1\\",
+        "A2+",
+        "A1+",
+        "@2/",
+        "@4/",
+        "A5/",
+        "@3\\",
+        "A2\\",
+        "A1\\",
+        "G5\\",
+        "A6/",
+        "@6\\",
+    ]
 
-    # Define the number of moves and the move notations to simulate input
-    num_moves = 3
-    moves_notation = [ "@0+", "A2+", "B1+"]  # Example move notations
-
-    # Create the input string as expected by ShowPosition()
-    input_str = f"{num_moves}\n" + "\n".join(moves_notation) + "\n"
-
-    # Create StringIO objects to simulate stdin and capture stdout
-    original_stdin = sys.stdin
-    original_stdout = sys.stdout
-    sys.stdin = io.StringIO(input_str)
-    sys.stdout = io.StringIO()
-
-    try:
-        ShowPosition()
-        # Retrieve the output
-        output = sys.stdout.getvalue()
-    except SystemExit:
-        output = "ShowPosition() exited due to invalid input.\n"
-    except Exception as e:
-        output = f"ShowPosition() raised an exception: {e}\n"
-    finally:
-        # Restore original stdin and stdout
-        sys.stdin = original_stdin
-        sys.stdout = original_stdout
-
-    print("Captured ShowPosition output:")
-    print(output)
-
+    num_moves = len(moves)
+    trax_bindings.ShowPosition(num_moves, moves)
+    
 def main():
     """Main test entry point."""
     print("========== TRAX BINDINGS TEST BEGIN ==========")
@@ -372,7 +378,7 @@ def main():
     test_book()
 
     # 12) ShowPosition
-    # test_show_position()
+    test_show_position()
 
     print("========== TRAX BINDINGS TEST END ==========")
 

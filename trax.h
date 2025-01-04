@@ -593,6 +593,6 @@ class Book {
 void ReadAndFindBestMove(Searcher* searcher);
 
 // See the description of the corresponding flag.
-void ShowPosition();
+void ShowPosition(int num_moves, const std::vector<std::string>& moves_notation);
 
 #endif  // TRAX_H_

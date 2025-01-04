@@ -274,5 +274,9 @@ PYBIND11_MODULE(trax_bindings, m) {
     //
     // ShowPosition
     //
-    m.def("ShowPosition", &ShowPosition, "Show the current position (reads from flags?).");
+    m.def("ShowPosition",
+      [](int num_moves, const std::vector<std::string>& moves_notation) {
+          ShowPosition(num_moves, moves_notation);
+      },
+      "Show the current position by applying the moves from move_list");
 }

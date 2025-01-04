@@ -1649,15 +1649,8 @@ void ReadAndFindBestMove(Searcher* searcher) {
 }
 
 // See the description of the corresponding flag.
-void ShowPosition() {
-  int num_moves = 0;
-  std::cin >> num_moves;
-
-  std::vector<std::string> moves_notation(num_moves);
-  for (std::string& move_notation : moves_notation) {
-    std::cin >> move_notation;
-  }
-
+void ShowPosition(int num_moves, const std::vector<std::string>& moves_notation) {
+  std::cout << "num_moves = " << num_moves << std::endl;
   Position position;
   for (const std::string& move_notation : moves_notation) {
     Move move;
@@ -1678,7 +1671,7 @@ void ShowPosition() {
   } else {
     std::cout << std::endl;
   }
-
+  position.Dump();
   for (int i_y = -1; i_y < position.max_y() + 1; ++i_y) {
     for (int j_x = -1; j_x < position.max_x() + 1; ++j_x) {
       std::cout << static_cast<const Position &>(position).at(j_x, i_y);
