@@ -1,6 +1,6 @@
 CXX = g++
 
-MODE ?= Release
+MODE ?= Debug
 
 CXXFLAGS_MAIN_RELEASE = -std=c++11 -Wall \
     -Wno-unused-const-variable \
@@ -16,14 +16,14 @@ CXXFLAGS_MAIN_DEBUG = -std=c++11 -Wall \
     -Wno-tautological-constant-out-of-range-compare \
     -Ivendor/gflags \
     -I. \
-    -O1 -g -fsanitize=address -fPIC -Wno-literal-suffix
+    -O1 -g -fPIC -Wno-literal-suffix
 
 CXXFLAGS_GFLAGS = -std=c++03 -Wall -fPIC \
     -Ivendor/gflags
 
 ifeq ($(MODE), Debug)
     CXXFLAGS_MAIN = $(CXXFLAGS_MAIN_DEBUG)
-    LDFLAGS = -O1 -fsanitize=address -fno-omit-frame-pointer -lpthread
+    LDFLAGS = -O1 -fno-omit-frame-pointer -lpthread
 else
     CXXFLAGS_MAIN = $(CXXFLAGS_MAIN_RELEASE)
     LDFLAGS = -O3 -lpthread

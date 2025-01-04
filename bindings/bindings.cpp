@@ -1,5 +1,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
+#include <pybind11/complex.h>
+#include <pybind11/chrono.h>
 #include <memory>
 #include "trax.h"
 
@@ -19,6 +22,10 @@ static py::list convertLargePieceNotations() {
 }
 
 PYBIND11_MODULE(trax_bindings, m) {
+    GeneratePossiblePiecesTable();
+    GenerateTrackDirectionTable();
+    GenerateForcedPlayTable();
+
     m.doc() = "Python bindings for TRAX game engine (excluding Searcher)";
 
     //
@@ -47,14 +54,6 @@ PYBIND11_MODULE(trax_bindings, m) {
     m.attr("kLargePieceNotations") = convertLargePieceNotations();
 
     m.attr("kPositionHashPrime") = kPositionHashPrime;
-
-    //
-    // global functions
-    //
-    m.def("Random", &Random, "Generate a random number using Xorshift128.");
-    m.def("GeneratePossiblePiecesTable", &GeneratePossiblePiecesTable, "Generate a lookup table for possible pieces.");
-    m.def("GenerateTrackDirectionTable", &GenerateTrackDirectionTable, "Generate direction table for track lines.");
-    m.def("GenerateForcedPlayTable", &GenerateForcedPlayTable, "Generate forced-play table.");
 
     //
     // Enums
@@ -127,54 +126,6 @@ PYBIND11_MODULE(trax_bindings, m) {
              "Comparison operator for sorting.");
 
     //
-    // Struct Line
-    //
-    py::class_<Line>(m, "Line")
-        .def(py::init<>(), "Default constructor for Line.")
-        .def(py::init<const std::pair<int, int>&,
-                      const std::pair<int, int>&,
-                      bool,
-                      const Position&,
-                      const std::map<std::pair<int, int>, int>&,
-                      int>(),
-             py::arg("endpoint_a"),
-             py::arg("endpoint_b"),
-             py::arg("is_red"),
-             py::arg("position"),
-             py::arg("indexed_edges"),
-             py::arg("total_index"),
-             "Construct a Line with detailed parameters.")
-        .def("Dump", &Line::Dump, "Debug print information of the line.")
-        .def("is_mate", &Line::is_mate, "Return true if line is mate.")
-        .def_readwrite("is_red", &Line::is_red, "True if the line is red.")
-        // Exposing edge_distances as a property
-        .def_property("edge_distances",
-            [](const Line &l) -> std::vector<int> {
-                return std::vector<int>(l.edge_distances, l.edge_distances + 2);
-            },
-            [](Line &l, const std::vector<int> &v) {
-                for (size_t i = 0; i < 2 && i < v.size(); ++i) { // size_t に変更
-                    l.edge_distances[i] = v[i];
-                }
-            },
-            "Distances to edges.")
-        .def_readwrite("endpoint_distance", &Line::endpoint_distance, "Endpoint distance.")
-        .def_readwrite("manhattan_distance", &Line::manhattan_distance, "Manhattan distance.")
-        .def_readwrite("is_inner", &Line::is_inner, "True if it is inner line.")
-        .def_property("loop_distances",
-            [](const Line &l) -> std::vector<int> {
-                return std::vector<int>(l.loop_distances, l.loop_distances + 2);
-            },
-            [](Line &l, const std::vector<int> &v) {
-                for (size_t i = 0; i < 2 && i < v.size(); ++i) { // size_t に変更
-                    l.loop_distances[i] = v[i];
-                }
-            },
-            "Loop distances for inner lines.")
-        .def_readwrite("endpoint_index_a", &Line::endpoint_index_a, "Endpoint A index.")
-        .def_readwrite("endpoint_index_b", &Line::endpoint_index_b, "Endpoint B index.");
-
-    //
     // Class Position
     //
     py::class_<Position, std::shared_ptr<Position>>(m, "Position")
@@ -188,16 +139,11 @@ PYBIND11_MODULE(trax_bindings, m) {
              },
              py::arg("move"),
              "Apply a move to the current position, return (success, next_position).")
-        .def("GetPossiblePieces", &Position::GetPossiblePieces, py::arg("x"), py::arg("y"),
+        .def("GetPossiblePieces", [](const std::shared_ptr<Position> &self, int x, int y) {
+                return self->GetPossiblePieces(x, y).to_ulong();
+            }, py::arg("x"), py::arg("y"),
              "Return a set of pieces that can be placed at (x, y).")
         .def("Hash", &Position::Hash, "Compute a rolling hash of the position.")
-        .def("EnumerateLines",
-             [](const std::shared_ptr<Position> &self) {
-                 std::vector<Line> lines;
-                 self->EnumerateLines(&lines);
-                 return lines;
-             },
-             "Enumerate lines in the position and return them.")
         .def("Swap", &Position::Swap, py::arg("to"), "Swap internal data with another Position object.")
         .def("Clear", &Position::Clear, "Clear the board to an empty Trax board.")
         .def("Dump", &Position::Dump, "Print debug info of the position to stderr.")

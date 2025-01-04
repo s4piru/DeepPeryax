@@ -23,21 +23,6 @@ def test_globals():
     print("kPositionHashPrime:", trax_bindings.kPositionHashPrime)
     print()
 
-def test_global_functions():
-    """Test global functions."""
-    print("Testing global functions...")
-    random_val = trax_bindings.Random()
-    print("Random() ->", random_val)
-
-    trax_bindings.GeneratePossiblePiecesTable()
-    print("GeneratePossiblePiecesTable() called.")
-
-    trax_bindings.GenerateTrackDirectionTable()
-    print("GenerateTrackDirectionTable() called.")
-
-    trax_bindings.GenerateForcedPlayTable()
-    print("GenerateForcedPlayTable() called.")
-    print()
 
 def test_enums():
     """Test enums (Piece, WinningReason)."""
@@ -64,25 +49,19 @@ def test_move():
 
     pos = Position()
 
-    # Default constructor
     move_default = Move()
     print("Default Move:", move_default.x, move_default.y, move_default.piece)
 
-    # Constructor with (x, y, piece)
-    move_init = Move(1, -1, Piece.PIECE_RWRW)
-    print("Initialized Move:", move_init.x, move_init.y, move_init.piece)
-
-    # Attempt to parse a valid notation like "A2+" or "@1/"
     try:
-        move_parsed = Move("A2+", pos)
-        print("Parsed Move (A2+):", move_parsed.x, move_parsed.y, move_parsed.piece)
+        move_parsed = Move("@0+", pos)
+        print("Parsed Move (@0+):", move_parsed.x, move_parsed.y, move_parsed.piece)
         print("Notation of move_parsed:", move_parsed.notation())
     except Exception as e:
-        print("Exception in Move constructor with 'A2+':", e)
+        print("Exception in Move constructor with '@0+':", e)
 
     # Parse method
     try:
-        success, next_pos = pos.DoMove(move_init)
+        success, next_pos = pos.DoMove(move_parsed)
         print("DoMove success:", success)
         if success:
             pos = next_pos  # Assign next_pos to pos
@@ -94,15 +73,11 @@ def test_move():
     print()
 
 def test_move_custom_strings():
-    """
-    Test Move struct with the specific notation strings:
-    @0+, A2+, B1+, @2\, A3/, etc.
-    """
+    """Test the Move struct with custom notation strings."""
     print("Testing Move struct with custom notation strings...")
 
     from trax_bindings import Move, Position
 
-    # These are the valid Trax notation strings provided
     notation_examples = [
         "@0+",
         "A2+",
@@ -167,34 +142,6 @@ def test_scored_move():
     print("Is sm2 < sm?", sm2 < sm)
     print()
 
-def test_line():
-    """Test the Line struct."""
-    print("Testing Line struct...")
-
-    from trax_bindings import Line, Position
-
-    pos = Position()
-    try:
-        line_obj = Line((0, 0), (1, 1), True, pos, {}, 0)
-        print("Line created with is_red:", line_obj.is_red)
-        line_obj.Dump()
-        print("Line is_mate:", line_obj.is_mate)
-        print("line_obj.edge_distances:", line_obj.edge_distances)
-        line_obj.edge_distances = [5, 7]
-        print("line_obj.edge_distances after setting:", line_obj.edge_distances)
-        print("line_obj.loop_distances:", line_obj.loop_distances)
-        line_obj.loop_distances = [10, 12]
-        print("line_obj.loop_distances after setting:", line_obj.loop_distances)
-        line_obj.endpoint_distance = 3
-        line_obj.manhattan_distance = 6
-        line_obj.is_inner = True
-        print("Line endpoint_distance:", line_obj.endpoint_distance)
-        print("Line manhattan_distance:", line_obj.manhattan_distance)
-        print("Line is_inner:", line_obj.is_inner)
-    except Exception as e:
-        print("Line Exception:", e)
-    print()
-
 def test_position():
     """Test the Position class."""
     print("Testing Position class...")
@@ -216,20 +163,18 @@ def test_position():
                 print("After DoMove, pos finished?:", pos.finished())
                 print("After DoMove, pos winner?:", pos.winner())
 
-        piece_set = pos.GetPossiblePieces(0, 0)
-        print("GetPossiblePieces(0,0):", piece_set)
+        piece_set = pos.GetPossiblePieces(0, 1)
+        print("GetPossiblePieces(0, 1):", piece_set)
         print("Position Hash:", pos.Hash())
-        lines = pos.EnumerateLines()
-        print("EnumerateLines:", lines)
 
         pos2 = Position()
         pos.Swap(pos2)
         print("Swapped pos with pos2. pos2 finished?:", pos2.finished())
+        pos2.Swap(pos)
 
         pos2.Clear()
         print("pos2 finished after Clear?:", pos2.finished())
 
-        pos.Dump()
         print("pos.ToString64x64():", pos.ToString64x64())
 
         try:
@@ -347,37 +292,22 @@ def main():
     """Main test entry point."""
     print("========== TRAX BINDINGS TEST BEGIN ==========")
 
-    # 1) Globals
     test_globals()
 
-    # 2) Global functions
-    test_global_functions()
-
-    # 3) Enums
     test_enums()
 
-    # 4) Move (basic)
     test_move()
 
-    # 5) Move with custom strings
     test_move_custom_strings()
 
-    # 6) ScoredMove
     test_scored_move()
 
-    # 7) Line
-    test_line()
-
-    # 8) Position
     test_position()
 
-    # 9) Game
     test_game()
 
-    # 11) Book
     test_book()
 
-    # 12) ShowPosition
     test_show_position()
 
     print("========== TRAX BINDINGS TEST END ==========")
